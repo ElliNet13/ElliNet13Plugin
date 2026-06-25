@@ -18,7 +18,9 @@ public class ElliNet13Plugin extends JavaPlugin {
         fakeBlockManager = new FakeBlockManager(this);
 
         // Register command
-        getCommand("fakeblocks").setExecutor(new FakeBlocksCommand(this, protocolManager, fakeBlockManager));
+        FakeBlocksCommand fakeBlocksCommand = new FakeBlocksCommand(this, protocolManager, fakeBlockManager);
+        getCommand("fakeblocks").setExecutor(fakeBlocksCommand);
+        getCommand("fakeblocks").setTabCompleter(fakeBlocksCommand);
 
         // Register packet listener
         FakeBlockPacketListener packetListener = new FakeBlockPacketListener(this, fakeBlockManager);

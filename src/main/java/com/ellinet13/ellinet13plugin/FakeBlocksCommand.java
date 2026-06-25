@@ -1,6 +1,8 @@
 package com.ellinet13.ellinet13plugin;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -9,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,7 +30,7 @@ import com.sk89q.worldedit.regions.Region;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-public class FakeBlocksCommand implements CommandExecutor {
+public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
 
     private final JavaPlugin plugin;
     private final ProtocolManager protocolManager;
@@ -39,6 +42,10 @@ public class FakeBlocksCommand implements CommandExecutor {
     private static final String PERM_CLEAR = "ellinet13plugin.fakeblocks.clear";
     private static final String PERM_LIST = "ellinet13plugin.fakeblocks.list";
     private static final String PERM_REVEAL = "ellinet13plugin.fakeblocks.reveal";
+    private static final List<String> MATERIAL_NAMES = Arrays.stream(Material.values())
+        .filter(Material::isBlock)
+        .map(material -> material.name().toLowerCase())
+        .toList();
 
     public FakeBlocksCommand(JavaPlugin plugin, ProtocolManager protocolManager, FakeBlockManager fakeBlockManager) {
         this.plugin = plugin;
@@ -109,6 +116,51 @@ public class FakeBlocksCommand implements CommandExecutor {
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!(sender instanceof Player player)) {
+            return Collections.emptyList();
+        }
+
+        if (args.length == 1) {
+            return filterPrefix(getAllowedSubcommands(player), args[0]);
+        }
+
+        String subcommand = args[0].toLowerCase();
+        if (subcommand.equals("replace") && player.hasPermission(PERM_REPLACE) && (args.length == 2 || args.length == 3)) {
+            return filterPrefix(MATERIAL_NAMES, args[args.length - 1]);
+        }
+
+        if (subcommand.equals("fill") && player.hasPermission(PERM_FILL) && args.length == 2) {
+            return filterPrefix(MATERIAL_NAMES, args[1]);
+        }
+
+        return Collections.emptyList();
+    }
+
+    private List<String> getAllowedSubcommands(Player player) {
+        return List.of(
+            new Subcommand("replace", PERM_REPLACE),
+            new Subcommand("fill", PERM_FILL),
+            new Subcommand("clear", PERM_CLEAR),
+            new Subcommand("list", PERM_LIST),
+            new Subcommand("reveal", PERM_REVEAL)
+        ).stream()
+            .filter(subcommand -> player.hasPermission(subcommand.permission()))
+            .map(Subcommand::name)
+            .toList();
+    }
+
+    private List<String> filterPrefix(List<String> options, String prefix) {
+        String normalizedPrefix = prefix.toLowerCase();
+        return options.stream()
+            .filter(option -> option.startsWith(normalizedPrefix))
+            .toList();
+    }
+
+    private record Subcommand(String name, String permission) {
     }
 
     private void sendUsage(Player player) {
