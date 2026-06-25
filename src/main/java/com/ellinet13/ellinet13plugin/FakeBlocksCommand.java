@@ -8,6 +8,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -209,7 +210,7 @@ public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
                 if (!fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial)) {
                     return false;
                 }
-                sendFakeBlock(player, location, toMaterial);
+                sendFakeBlockToWorld(location, toMaterial);
                 return true;
             }
             return false;
@@ -252,7 +253,7 @@ public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
             if (!fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial)) {
                 return false;
             }
-            sendFakeBlock(player, location, toMaterial);
+            sendFakeBlockToWorld(location, toMaterial);
             return true;
         }, 10000);
 
@@ -305,7 +306,7 @@ public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
                 Location location = new Location(player.getWorld(), x, y, z);
                 Material realMaterial = location.getBlock().getType();
 
-                sendFakeBlock(player, location, realMaterial);
+                sendFakeBlockToWorld(location, realMaterial);
             } catch (NumberFormatException e) {
                 plugin.getLogger().warning(() -> "Invalid block position: " + key);
             }
@@ -335,18 +336,22 @@ public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
         boolean newState = fakeBlockManager.toggleRevealMode();
         if (newState) {
             player.sendMessage(color("&aReveal mode enabled - fake blocks will appear as green wool."));
-            // Refresh all fake blocks for this player
-            refreshFakeBlocksForPlayer(player);
         } else {
             player.sendMessage(color("&aReveal mode disabled - fake blocks will appear as their real fake material."));
-            // Refresh all fake blocks for this player
-            refreshFakeBlocksForPlayer(player);
         }
+
+        refreshFakeBlocksForAllPlayers();
     }
 
     /**
-     * Refreshes all fake block packets for a player
+     * Refreshes all fake block packets for online players
      */
+    private void refreshFakeBlocksForAllPlayers() {
+        for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
+            refreshFakeBlocksForPlayer(onlinePlayer);
+        }
+    }
+
     private void refreshFakeBlocksForPlayer(Player player) {
         Map<String, Material> allFakeBlocks = fakeBlockManager.getAllFakeBlocks();
         String worldName = player.getWorld().getName();
@@ -424,7 +429,19 @@ public class FakeBlocksCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    public void sendFakeBlock(Player player, Location location, Material material) {
+    private void sendFakeBlockToWorld(Location location, Material material) {
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        Material displayMaterial = fakeBlockManager.getDisplayMaterial(material);
+        for (Player player : world.getPlayers()) {
+            sendFakeBlock(player, location, displayMaterial);
+        }
+    }
+
+    private void sendFakeBlock(Player player, Location location, Material material) {
         PacketContainer packet = protocolManager.createPacket(com.comphenix.protocol.PacketType.Play.Server.BLOCK_CHANGE);
         packet.getBlockPositionModifier().write(0, new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
         packet.getBlockData().write(0, WrappedBlockData.createData(material));
