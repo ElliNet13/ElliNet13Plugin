@@ -4,3 +4,13 @@ main: com.ellinet13.ellinet13plugin.ElliNet13Plugin
 api-version: "1.21"
 author: ElliNet13
 description: A plugin with some random stuff
+
+depend:
+  - WorldEdit
+  - ProtocolLib
+
+commands:
+  fakeblocks:
+    description: Fake block replacement from WorldEdit selection using ProtocolLib
+    usage: /fakeblocks <from> <to>
+    aliases: [fb]
