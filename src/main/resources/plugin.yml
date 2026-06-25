@@ -1,0 +1,6 @@
+name: ElliNet13Plugin
+version: 1.0
+main: com.ellinet13.ellinet13plugin.ElliNet13Plugin
+api-version: "1.21"
+author: ElliNet13
+description: A plugin with some random stuff

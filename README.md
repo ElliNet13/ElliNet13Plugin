@@ -1,2 +1,2 @@
 # ElliNet13Plugin
-A plugin with same random stuff
+A plugin with some random stuff
