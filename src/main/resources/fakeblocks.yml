@@ -1,0 +1,9 @@
+# Fake Blocks Configuration
+# This file stores the fake block mappings
+# Format:
+# fake-blocks:
+#   world_name:
+#     x_y_z: MATERIAL
+#     x_y_z: MATERIAL
+
+fake-blocks: {}

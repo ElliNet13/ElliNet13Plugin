@@ -12,5 +12,28 @@ depend:
 commands:
   fakeblocks:
     description: Fake block replacement from WorldEdit selection using ProtocolLib
-    usage: /fakeblocks <from> <to>
+    usage: |
+      /fakeblocks <subcommand>
+      replace <from> <to> - Replace specific blocks in selection
+      fill <to> - Replace ALL blocks in selection
+      clear - Clear fake blocks in selection
+      list - Show fake block count
+      reveal - Toggle reveal mode (green wool)
     aliases: [fb]
+
+permissions:
+  ellinet13plugin.fakeblocks.replace:
+    description: Replace specific blocks with fake blocks
+    default: op
+  ellinet13plugin.fakeblocks.fill:
+    description: Replace all blocks in selection with fake blocks
+    default: op
+  ellinet13plugin.fakeblocks.clear:
+    description: Clear fake blocks in selection
+    default: op
+  ellinet13plugin.fakeblocks.list:
+    description: List fake block count
+    default: op
+  ellinet13plugin.fakeblocks.reveal:
+    description: Toggle reveal mode to see fake blocks as green wool
+    default: op
