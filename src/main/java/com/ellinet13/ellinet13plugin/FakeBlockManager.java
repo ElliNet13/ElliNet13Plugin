@@ -18,6 +18,7 @@ public class FakeBlockManager {
     private final Map<String, Material> fakeBlocks = new HashMap<>();
     private final File configFile;
     private boolean revealMode = false;
+    private boolean allowAirReplacement = false;
 
     private static final Material REVEAL_MATERIAL = Material.GREEN_WOOL;
 
@@ -37,10 +38,15 @@ public class FakeBlockManager {
     /**
      * Adds a fake block mapping
      */
-    public void setFakeBlock(World world, int x, int y, int z, Material fakeMaterial) {
+    public boolean setFakeBlock(World world, int x, int y, int z, Material fakeMaterial) {
+        if (!canDisplayFakeBlockAt(world, x, y, z)) {
+            return false;
+        }
+
         String key = makeKey(world, x, y, z);
         fakeBlocks.put(key, fakeMaterial);
         saveConfig();
+        return true;
     }
 
     /**
@@ -92,6 +98,10 @@ public class FakeBlockManager {
      * Gets the fake material for a location, or null if not faked
      */
     public Material getFakeBlock(World world, int x, int y, int z) {
+        if (!canDisplayFakeBlockAt(world, x, y, z)) {
+            return null;
+        }
+
         return fakeBlocks.get(makeKey(world, x, y, z));
     }
 
@@ -132,6 +142,20 @@ public class FakeBlockManager {
     }
 
     /**
+     * Checks whether fake blocks are allowed to replace air blocks.
+     */
+    public boolean isAirReplacementAllowed() {
+        return allowAirReplacement;
+    }
+
+    /**
+     * Checks whether a fake block may be shown at this real block position.
+     */
+    public boolean canDisplayFakeBlockAt(World world, int x, int y, int z) {
+        return allowAirReplacement || !world.getBlockAt(x, y, z).getType().isAir();
+    }
+
+    /**
      * Gets the material to display (either the fake material or green wool if reveal mode is on)
      */
     public Material getDisplayMaterial(Material fakeMaterial) {
@@ -151,6 +175,7 @@ public class FakeBlockManager {
         }
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+        allowAirReplacement = config.getBoolean("settings.allow-air-replacement", false);
         ConfigurationSection blocksSection = config.getConfigurationSection("fake-blocks");
 
         if (blocksSection != null) {
@@ -177,7 +202,7 @@ public class FakeBlockManager {
             }
         }
 
-        plugin.getLogger().info("Loaded " + fakeBlocks.size() + " fake block mappings");
+        plugin.getLogger().info(() -> "Loaded " + fakeBlocks.size() + " fake block mappings");
     }
 
     /**
@@ -185,6 +210,7 @@ public class FakeBlockManager {
      */
     private void saveConfig() {
         YamlConfiguration config = new YamlConfiguration();
+        config.set("settings.allow-air-replacement", allowAirReplacement);
         Map<String, Map<String, String>> blocksByWorld = new HashMap<>();
 
         for (Map.Entry<String, Material> entry : fakeBlocks.entrySet()) {

@@ -6,4 +6,7 @@
 #     x_y_z: MATERIAL
 #     x_y_z: MATERIAL
 
+settings:
+  allow-air-replacement: false
+
 fake-blocks: {}

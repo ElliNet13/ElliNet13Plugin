@@ -62,6 +62,10 @@ public class FakeBlockPlayerListener implements Listener {
                 int y = Integer.parseInt(parts[2]);
                 int z = Integer.parseInt(parts[3]);
 
+                if (!fakeBlockManager.canDisplayFakeBlockAt(player.getWorld(), x, y, z)) {
+                    continue;
+                }
+
                 Location location = new Location(player.getWorld(), x, y, z);
                 // Use display material (consider reveal mode)
                 Material displayMaterial = fakeBlockManager.getDisplayMaterial(fakeMaterial);

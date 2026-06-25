@@ -146,10 +146,17 @@ public class FakeBlocksCommand implements CommandExecutor {
             return;
         }
 
+        if (fromMaterial.isAir() && !fakeBlockManager.isAirReplacementAllowed()) {
+            player.sendMessage(color("&cReplacing air with fake blocks is disabled in fakeblocks.yml."));
+            return;
+        }
+
         int changed = processSelection(player, selection, player.getWorld(), (x, y, z) -> {
             Location location = new Location(player.getWorld(), x, y, z);
             if (location.getBlock().getType() == fromMaterial) {
-                fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial);
+                if (!fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial)) {
+                    return false;
+                }
                 sendFakeBlock(player, location, toMaterial);
                 return true;
             }
@@ -190,13 +197,19 @@ public class FakeBlocksCommand implements CommandExecutor {
 
         int changed = processSelection(player, selection, player.getWorld(), (x, y, z) -> {
             Location location = new Location(player.getWorld(), x, y, z);
-            fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial);
+            if (!fakeBlockManager.setFakeBlock(player.getWorld(), x, y, z, toMaterial)) {
+                return false;
+            }
             sendFakeBlock(player, location, toMaterial);
             return true;
         }, 10000);
 
         if (changed == 0) {
-            player.sendMessage(color("&eNo blocks found in your selection."));
+            if (fakeBlockManager.isAirReplacementAllowed()) {
+                player.sendMessage(color("&eNo blocks found in your selection."));
+            } else {
+                player.sendMessage(color("&eNo non-air blocks found in your selection."));
+            }
         } else {
             player.sendMessage(color("&aSent fake block updates for " + changed + " block(s) in your selection (all blocks replaced)."));
         }
@@ -302,6 +315,10 @@ public class FakeBlocksCommand implements CommandExecutor {
                 int x = Integer.parseInt(parts[1]);
                 int y = Integer.parseInt(parts[2]);
                 int z = Integer.parseInt(parts[3]);
+
+                if (!fakeBlockManager.canDisplayFakeBlockAt(player.getWorld(), x, y, z)) {
+                    continue;
+                }
 
                 Location location = new Location(player.getWorld(), x, y, z);
                 Material displayMaterial = fakeBlockManager.getDisplayMaterial(entry.getValue());
